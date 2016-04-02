@@ -24,9 +24,10 @@
 from plugins.base import BasePlugin
 
 
-class telnet(BasePlugin):
+class TelnetPlugin(BasePlugin):
     def __init__(self, socket, framework):
         super().__init__(socket, framework)
+        self._framework = framework
         self.username = "NULL"
         self.password = "NULL"
 
@@ -58,7 +59,7 @@ class telnet(BasePlugin):
         ech = 'echo'
         qt = 'quit'
         options_list = [opt, hlp, ech, qt]
-        uo = UserOptions(self._skt)
+        uo = useroptions(self._skt)
 
         self.login()
         uo.options(options_list, True)
@@ -66,7 +67,7 @@ class telnet(BasePlugin):
         user_input = ''
         while not self.kill_plugin:
             try:
-                self._skt.send(b'. ')
+                self._skt.send(b'.')
                 data = self._skt.recv(1024).decode()
                 d = data.replace('\r\n', '')
 
@@ -97,7 +98,7 @@ class telnet(BasePlugin):
         self.do_save(data)
 
 
-class UserOptions(telnet):
+class useroptions(TelnetPlugin):
     def __init__(self, socket):
         self._skt = socket
 

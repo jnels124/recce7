@@ -6,12 +6,12 @@ import datetime
 
 
 class BasePlugin(Thread):
-    def __init__(self, socket, framework):
+    def __init__(self, base_socket, framework):
         Thread.__init__(self)
-        self._skt = socket
+        self._skt = base_socket
         self._framework = framework
-        self._localAddress = socket.getsockname()[0]
-        self._peerAddress = socket.getpeername()[0]
+        self._localAddress = base_socket.getsockname()[0]
+        self._peerAddress = base_socket.getpeername()[0]
         self.kill_plugin = False
 
     def run(self):
