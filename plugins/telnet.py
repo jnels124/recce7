@@ -25,8 +25,8 @@ from plugins.base import BasePlugin
 
 
 class TelnetPlugin(BasePlugin):
-    def __init__(self, socket, framework):
-        super().__init__(socket, framework)
+    def __init__(self, socket, config, framework):
+        super().__init__(socket, config, framework)
         self.username = "NULL"
         self.password = "NULL"
 

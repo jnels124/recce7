@@ -2,7 +2,7 @@ import time
 from common.GlobalConfig import Configuration
 from http.server import HTTPServer
 
-from reportserver.server.PortsServiceHandler import PortsServiceHandler
+from reportserver.server.RESTRequestHandler import RestRequestHandler
 
 
 #Create and start the HTTP Server
@@ -17,15 +17,12 @@ class SimpleHttpServer:
 
     def setupAndStart(self):
 
+        server_address = (self.host, self.port)
 
-        server_addr = (self.host, self.port)
-
-        # TODO:??  feels wrong to specify PortsServiceHandler here
-        # I think we should have PortsServiceHandler havea RequestHandler instead of isa
-        request_handler = PortsServiceHandler
+        request_handler = RestRequestHandler
 
         # instantiate a server object
-        httpd = HTTPServer (server_addr, request_handler)
+        httpd = HTTPServer (server_address, request_handler)
         print(time.asctime(), "Server Starting - %s:%s" % (self.host, self.port))
 
         try:

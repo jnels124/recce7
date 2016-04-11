@@ -2,7 +2,7 @@ import unittest
 import datetime
 from reportserver.manager import dateTimeUtility
 
-# Unit tests for DateTimeManager
+# Unit tests for DateTimeUtility
 
 class DateTimeTest(unittest.TestCase):
 
@@ -10,43 +10,88 @@ class DateTimeTest(unittest.TestCase):
 
     def test_get_begin_date(self):
 
-
         # Test with weeks
         d = datetime.timedelta(weeks=3)
-        self.assertEqual( (dateTimeUtility.get_begin_date("weeks", 3)), self.getDeltaOfDateNow(d))
+        calculated_date = dateTimeUtility.get_begin_date("weeks", 3)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
 
         d = datetime.timedelta(weeks=7)
-        self.assertEqual(dateTimeUtility.get_begin_date("weeks", 7), self.getDeltaOfDateNow(d))
+        calculated_date = dateTimeUtility.get_begin_date("weeks", 7)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
         d = datetime.timedelta(weeks=0)
-        self.assertEqual(dateTimeUtility.get_begin_date("weeks", 0), self.getDeltaOfDateNow(d))
+        calculated_date = dateTimeUtility.get_begin_date("weeks", 0)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
 
         # Test with days
         d = datetime.timedelta(days=5)
-        self.assertEqual(dateTimeUtility.get_begin_date("days", 5), self.getDeltaOfDateNow(d))
+        calculated_date = dateTimeUtility.get_begin_date("days", 5)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
         d = datetime.timedelta(days=20)
-        self.assertEqual(dateTimeUtility.get_begin_date("days", 20), self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("days", 20)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        calculated_date = dateTimeUtility.get_begin_date("days", 0)
         d = datetime.timedelta(days=0)
-        self.assertEqual(dateTimeUtility.get_begin_date("days", 0), self.getDeltaOfDateNow(d) )
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        d = datetime.timedelta(days=1)
+        calculated_date = dateTimeUtility.get_begin_date(unit="days")
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        calculated_date = dateTimeUtility.get_begin_date()
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
 
         # Test with hours
         d = datetime.timedelta(hours=2)
-        self.assertEqual(dateTimeUtility.get_begin_date("hours", 2),self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("hours", 2)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+
         d = datetime.timedelta(hours=23)
-        self.assertEqual(dateTimeUtility.get_begin_date("hours", 23), self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("hours", 23)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
         d = datetime.timedelta(hours=0)
-        self.assertEqual(dateTimeUtility.get_begin_date("hours", 0), self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("hours", 0)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
 
         # Test with minutes
         d = datetime.timedelta(minutes=45)
-        self.assertEqual(dateTimeUtility.get_begin_date("minutes", 45), self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("minutes", 45)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
         d = datetime.timedelta(minutes=88)
-        self.assertEqual(dateTimeUtility.get_begin_date("minutes", 88), self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("minutes", 88)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+
         d = datetime.timedelta(minutes=0)
-        self.assertEqual(dateTimeUtility.get_begin_date("minutes", 0),self.getDeltaOfDateNow(d) )
+        calculated_date = dateTimeUtility.get_begin_date("minutes", 0)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        # Test default (1 day)
+        d = datetime.timedelta(days=1)
+        calculated_date = dateTimeUtility.get_begin_date("decades", 45)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        calculated_date = dateTimeUtility.get_begin_date("iemclaiejfkd djeaa", 2)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        calculated_date = dateTimeUtility.get_begin_date("", 30)
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
+
+        calculated_date = dateTimeUtility.get_begin_date()
+        self.assertEqual((self.format_date(calculated_date)), self.getDeltaOfDateNow(d))
 
     def getDeltaOfDateNow(self, delta):
-        return (datetime.datetime.now() - delta).date()
 
+        return self.format_date(datetime.datetime.now() - delta)
+
+
+    def format_date(self,date_given):
+        return date_given.strftime("%Y-%m-%d_%H:%M:%S")
 
 
     def test_get_iso_format(self):

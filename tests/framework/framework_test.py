@@ -9,7 +9,7 @@ from framework.frmwork import Framework
 from framework.frmwork import main
 from framework.networklistener import NetworkListener
 from plugins.base import BasePlugin
-from plugins.HTTPPlugin import HTTPPlugin
+from plugins.http import HTTPPlugin
 from unittest.mock import patch
 from unittest.mock import MagicMock
 import os

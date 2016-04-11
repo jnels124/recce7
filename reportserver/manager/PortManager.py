@@ -27,10 +27,8 @@ from reportserver.dao import DatabaseHandler
 
 class PortManager:
 
-    #TODO:
     # Port Manager: calls necessary managers and utilities to generate parameters for sql.
-    #  Mgr for reading config files to know what table /column names there are.
-    #  Utility for calc time range
+    # List of valid ports it can receive is taken from the Configuration setup.
     #
     #
     validPortNumbers = ()
@@ -47,10 +45,10 @@ class PortManager:
             return False
 
     def getPort(self, port_number, uom, unit):
-        print("Retrieving port:" + str(port_number))
+        print("Retrieving port:" + str(port_number) + "uom:" + uom + " size: " + str(unit))
 
         if self.isPortValid(port_number):
-            return DatabaseHandler.getJson(port_number, uom, unit)
+            return DatabaseHandler.get_json_by_time(port_number, uom, unit)
         else:
             return None
 

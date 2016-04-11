@@ -121,7 +121,7 @@ class Framework:
     def spawn(self, socket, config):
         # ToDo Throw exception if plugin class not found
         plugin_class = self.plugin_imports[config['port']]
-        plugin = plugin_class(socket, self)
+        plugin = plugin_class(socket, config, self)
         plugin.start()
         self.running_plugins_list.append(plugin)
         return plugin

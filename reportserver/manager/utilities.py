@@ -23,13 +23,28 @@
 ################################################################################
 
 
-def getIntValue(givenStr):
+#Given a string, try to convert it to an int.
+def validatePortNumber(givenStr):
     print("given str is: " + givenStr)
     try:
-        returnval = int(givenStr)
-        return returnval
+        return int(givenStr)
     except Exception as e:
-        print("received invalid string to convert to int: " + givenStr)
+        print("Received invalid string to convert to int: " + givenStr)
         print (str(e))
         return None
 
+
+#Given a token
+def validateTimePeriod(tokens):
+    #TODO:  validate the tokens given.
+    if len(tokens) != 7:
+        raise ValueError("token length expected is 7")
+
+    uom = None
+    units = None
+
+    uom = str(tokens[5])
+    units = int(tokens[6])
+
+    print(uom + ": " + str(units))
+    return (uom, units)

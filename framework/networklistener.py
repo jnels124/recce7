@@ -69,6 +69,6 @@ class NetworkListener(Thread):
         if self.session_socket:
             if platform.system() == 'Linux':
                 self.session_socket.shutdown(socket.SHUT_RDWR)
-                self.session_socket.detach()
-            self.session_socket.close()
+            else:
+                self.session_socket.close()
         self.join()
