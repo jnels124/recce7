@@ -9,14 +9,19 @@ import platform
 import socket
 import datetime
 from threading import Thread
-import uuid
-
 from uuid import uuid4
 
+
 class BasePlugin(Thread):
-    def __init__(self, socket, config, framework):
+    """
+
+    """
+    def __init__(self, _skt, config, framework):
+        """
+
+        """
         Thread.__init__(self)
-        self._skt = socket
+        self._skt = _skt
         self._config = config
         self._framework = framework
         self._localAddress = self._skt.getsockname()[0]
@@ -25,37 +30,53 @@ class BasePlugin(Thread):
         self.kill_plugin = False
 
     def run(self):
-        while self._skt and not self.kill_plugin:
-            try:
-                self.do_track()
-                self.do_save()
-            except ConnectionResetError as cre:
+        """
+
+        """
+        try:
+            self.do_track()
+        except ConnectionResetError as cre:
                 error_number = cre.errno
                 if error_number == 54:  # ERRNO 54 is 'connection reset by peer'
                     # Log that it is possible we are being scanned, would want to write this to the db
                     print("Maybe we are being scanned")
                     pass
 
+        self.shutdown()
         self._framework.plugin_stopped(self)
 
-    def do_save(self):
-        entry = {self.get_table_name() : {}}
+    def get_entry(self):
+        entry = {self.get_table_name(): {}}
         columns = self.get_table_columns()
 
         for i in columns:
             try:
                 entry[self.get_table_name()][i] = getattr(self, i)
             except AttributeError:
-                entry[self.get_table_name()][i] = 'Attribute did not exist'
+                entry[self.get_table_name()][i] = ''
+
+        return entry
+
+    def do_save(self):
+        """
+
+        """
+        entry = self.get_entry()
 
         entry[self.get_table_name()]['peerAddress'] = self._peerAddress
         entry[self.get_table_name()]['localAddress'] = self._localAddress
         entry[self.get_table_name()]['eventDateTime'] = datetime.datetime.now().isoformat()
         entry[self.get_table_name()]['session'] = self._session
 
-        self._framework.insert_data(entry)
+        try:
+            self._framework.insert_data(entry)
+        except AttributeError:
+            return
 
     def shutdown(self):
+        """
+
+        """
         self.kill_plugin = True
 
         if self._skt:
@@ -68,7 +89,10 @@ class BasePlugin(Thread):
         else:
             print("Socket already closed for plugin thread name: " + self.name)
 
-        self.join()
+        try:
+            self.join()
+        except RuntimeError:
+            return
 
     def do_track(self):
         """
@@ -106,4 +130,4 @@ class BasePlugin(Thread):
         return columns
 
     def get_uuid4(self):
-        return str(uuid.uuid4())
+        return str(uuid4())

@@ -28,111 +28,108 @@
 
 from plugins.base import BasePlugin
 
-class TelnetPlugin(BasePlugin):
-    STATES = ['username',
-              'password',
-              'command',
-              'handle',]
 
+class TelnetPlugin(BasePlugin):
     def __init__(self, socket, config, framework):
         BasePlugin.__init__(self, socket, config, framework)
-        self.state = 0
         self.input_type = None
         self.user_input = None
-        self.arguments = None
-        self.handle_command = None
-        self._session = str(self.get_uuid4())
+        self._session = None
 
     def do_track(self):
-        self.input_type = self.STATES[self.state]
-        getattr(self, self.STATES[self.state])()
+        self.get_session()
+
+        try:
+            self.username()
+            self.password()
+            self.options()
+            while self._skt and not self.kill_plugin:
+                self.command()
+        except OSError:
+            self.kill_plugin = True
+            return
+        except AttributeError:
+            self.kill_plugin = True
+            return
+        except UnicodeDecodeError:
+            self.kill_plugin = True
+            return
+
+    def get_session(self):
+        self._session = str(self.get_uuid4())
 
     def get_input(self):
-        self.input_type = self.STATES[self.state]
-        data = self._skt.recv(1024).decode()
+        try:
+            data = self._skt.recv(1024).decode()
+        except OSError:
+            self.kill_plugin = True
+            return
+
         data = data.strip('\r\n')
         data = data.strip('\n')
         return data
 
     def username(self):
-        try:
-            self._skt.send(b'Username: ')
-            self.user_input = self.get_input()
-        except OSError:
-            pass
-        except AttributeError:
-            pass
+        self._skt.send(b'Username: ')
 
-        self.state = 1
+        self.input_type = 'username'
+        self.user_input = self.get_input()
+        self.do_save()
 
     def password(self):
-        try:
-            self._skt.send(b'Password: ')
-            self.user_input = self.get_input()
-        except OSError:
-            pass
-        except AttributeError:
-            pass
+        self._skt.send(b'Password: ')
 
-        self.state = 2
-        self.options()
+        self.input_type = 'password'
+        self.user_input = self.get_input()
+        self.do_save()
 
     def command(self):
+        self.input_type = 'command'
         self._skt.send(b'. ')
-        self.user_input = self.get_input()
-        self.arguments = self.user_input.split()
 
-        try:
-            self.handle_command = self.arguments.pop(0)
-        except IndexError:
+        self.user_input = self.get_input()
+        self.do_save()
+        arguments = self.user_input.split(' ', 1)
+
+        if len(arguments) == 0:
             return
 
         try:
-            getattr(self, self.handle_command)()
+            getattr(self, arguments.pop(0))(arguments)
         except AttributeError:
             self._skt.send(b'%unrecognized command - type options for a list\r\n')
-
-    def handle(self):
-        print(self.handle_command)
-        try:
-            getattr(self, 'handle_' + self.handle_command)()
-        except AttributeError:
-            pass
-        self.state = 2
 
     OPTIONS = ['options',
                'help',
                'echo',
                'quit',]
 
-    def options(self):
+    def options(self, arguments=None):
         self._skt.send(b'\r\nWelcome, Please choose from the following options\r\n')
         for option in self.OPTIONS:
             option += '\t'
             self._skt.sendall(option.encode())
         self._skt.send(b'\r\n')
 
-    def help(self):
+    def help(self, arguments=None):
         help_msg = b'echo:\t\tprompt to echo back typing\r\n' \
                    b'help:\t\tdetailed description of options\r\n' \
                    b'options:\tbasic list of options available to user\r\n' \
                    b'quit:\t\tclose telnet connection to server\r\n'
         self._skt.send(help_msg)
 
-    def echo(self):
-        if len(self.arguments) > 0:
-            for i in self.arguments:
+    def echo(self, arguments=None):
+        if len(arguments) > 0:
+            for i in arguments:
                 self._skt.send(i.encode())
         else:
-            self.state = 3
-
-    def handle_echo(self):
-        print("get here")
-        self._skt.send(b'text? ')
-        self.user_input = self.get_input()
-        self._skt.send(self.user_input.encode())
+            self._skt.send(b'Text? ')
+            self.input_type = 'echo'
+            self.user_input = self.get_input()
+            self._skt.send(self.user_input.encode())
+            self.do_save()
         self._skt.send(b'\r\n')
 
-    def quit(self):
+    def quit(self, arguments=None):
         self._skt.send(b'\nGoodbye\n')
-        self._skt = None
+        self.kill_plugin = True

@@ -6,6 +6,7 @@ from plugins.base import BasePlugin
 from socket import SocketIO
 from socket import timeout
 from http.server import BaseHTTPRequestHandler
+from http.server import _quote_html
 
 PAGE_LOGIN = b"""<html>
     <head>
@@ -26,6 +27,11 @@ PAGE_LOGIN = b"""<html>
     </head>
 </html>"""
 
+GOOD_PATHS = [
+    '/',
+    '/index.html',
+]
+
 MAX_MESSAGE_LENGTH = 65536
 
 
@@ -36,24 +42,31 @@ class HTTPPlugin(BasePlugin, BaseHTTPRequestHandler):
         self.rfile = SocketIO(socket, "r")
         self.wfile = SocketIO(socket, "w")
 
-        self.command = None
-        self.path = None
-        self.headers = None
-        self.body = None
-
         socket.settimeout(60)
 
     def do_track(self):
-        self.handle_one_request()
+        try:
+            self.handle_one_request()
+        except OSError:
+            self.kill_plugin = True
+            return
+        except AttributeError:
+            self.kill_plugin = True
+            return
+        except UnicodeDecodeError:
+            self.kill_plugin = True
+            return
+
         self.format_data()
+        self.do_save()
         self.kill_plugin = True
 
     def get_body(self):
         too_long = False
 
-        if self.headers is None:
-            self.body = ''
+        if not hasattr(self, 'headers'):
             return
+
         else:
 
             try:
@@ -74,24 +87,36 @@ class HTTPPlugin(BasePlugin, BaseHTTPRequestHandler):
                 self.body = ''
 
     def get_session(self):
-        cookie = self.headers.get('cookie', None)
+        if not hasattr(self, 'headers'):
+            return
+
+        try:
+            cookie = self.headers.get('cookie', None)
+        except AttributeError:
+            cookie = self.get_uuid4()
+            self.send_header('Set-Cookie', 'SESSION=' + cookie)
+            return
+
         if cookie is None:
             cookie = self.get_uuid4()
         else:
-            cookie = cookie[len("SESSION="):]
+            cookie = cookie.split("SESSION=")
+            if len(cookie) > 1:
+                cookie = cookie[1].split()[0]
+
         self.send_header('Set-Cookie', 'SESSION=' + cookie)
         self._session = cookie
 
     def format_data(self):
-        if self.command is None:
+        if not hasattr(self, 'command'):
             self.command = ''
-        if self.path is None:
+        if not hasattr(self, 'path'):
             self.path = ''
-        if self.headers is None:
+        if not hasattr(self, 'headers'):
             self.headers = ''
         else:
             self.headers = self.headers.as_string()
-        if self.body is None:
+        if not hasattr(self, 'body'):
             self.body = ''
 
     def address_string(self):
@@ -104,30 +129,38 @@ class HTTPPlugin(BasePlugin, BaseHTTPRequestHandler):
             self.flush_headers()
 
     def do_GET(self):
-        self.do_HEAD()
-        if self.path == '/':
+        if self.path in GOOD_PATHS:
+            self.do_HEAD()
             self.wfile.write(PAGE_LOGIN)
+        else:
+            self.send_error(404)
 
     def do_HEAD(self):
-        if self.path == '/':
+        if self.path in GOOD_PATHS:
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
+            self.send_header('Connection', 'close')
             self.send_header('Content-Length', str(len(PAGE_LOGIN)))
             self.end_headers()
+        else:
+            content = (self.error_message_format %
+                   {'code': 404, 'message': _quote_html('File not found'),
+                    'explain': _quote_html('Nothing matches the given URI')})
+            body = content.encode('UTF-8', 'replace')
+            self.send_response(404, "File not found")
+            self.send_header("Content-Type", self.error_content_type)
+            self.send_header('Connection', 'close')
+            self.send_header('Content-Length', int(len(body)))
+            self.end_headers()
+
+    def do_POST(self):
+        self.get_body()
+        if self.path in GOOD_PATHS:
+            self.go_GET()
         elif self.path == '/login':
             self.send_error(403)
         else:
             self.send_error(404)
-
-    def do_POST(self):
-        if self.path =='/':
-            self.do_GET()
-        if self.path == '/login':
-            self.send_error(500)
-            self.get_body()
-        else:
-            self.send_error(404)
-            self.get_body()
 
     def do_PUT(self):
         self.send_error(501)
