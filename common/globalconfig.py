@@ -26,6 +26,9 @@ class GlobalConfig:
             return config_object
 
         def read_plugin_config(self):
+            if len(self._plugin_cfg_dict) != 0:
+                return
+            self._enabled_ports = []
             config_parser = configparser.RawConfigParser()
             config_parser.optionxform = lambda option: option
             config_parser.read(self._plugin_cfg_path)
@@ -39,6 +42,8 @@ class GlobalConfig:
                     self._enabled_ports.append(port)
 
         def read_global_config(self):
+            if len(self._global_cfg_dict) != 0:
+                return
             config_parser = configparser.ConfigParser()
             config_parser.read(self._global_cfg_path)
 
@@ -103,6 +108,9 @@ class GlobalConfig:
         if refresh or not GlobalConfig.__instance:
             GlobalConfig.__instance = GlobalConfig._GlobalConfig(
                 plugin_cfg_path, global_cfg_path)
+            GlobalConfig.__instance._global_cfg = {}
+            GlobalConfig.__instance._plugin_cfg = {}
+            GlobalConfig.__instance._enabled_ports = []
         return GlobalConfig.__instance
 
     def __getattr__(self, name):
