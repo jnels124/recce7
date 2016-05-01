@@ -88,22 +88,40 @@ class TelnetPlugin(BasePlugin):
         self._skt.send(b'. ')
 
         self.user_input = self.get_input()
-        self.do_save()
         arguments = self.user_input.split(' ', 1)
 
         if len(arguments) == 0:
             return
 
-        try:
-            getattr(self, arguments.pop(0))(arguments)
-        except AttributeError:
+        self.user_input = arguments.pop(0)
+        self.do_save()
+
+        if (hasattr(self, self.user_input)):
+            if (self.user_input == '__class__'):
+                self.do_save()
+                self._skt.send(b'%unrecognized command - type options for a list\r\n')
+            elif (hasattr(getattr(self,self.user_input),'is_command')):
+                if len(arguments) == 0:
+                    getattr(self,self.user_input)()
+                else:
+                    getattr(self,self.user_input)(arguments.pop(0))
+            else:
+                self.do_save()
+                self._skt.send(b'%unrecognized command - type options for a list\r\n')
+        else:
+            self.do_save()
             self._skt.send(b'%unrecognized command - type options for a list\r\n')
+
+    def is_command(function):
+        function.is_command = True
+        return function
 
     OPTIONS = ['options',
                'help',
                'echo',
                'quit',]
 
+    @is_command
     def options(self, arguments=None):
         self._skt.send(b'\r\nWelcome, Please choose from the following options\r\n')
         for option in self.OPTIONS:
@@ -111,6 +129,7 @@ class TelnetPlugin(BasePlugin):
             self._skt.sendall(option.encode())
         self._skt.send(b'\r\n')
 
+    @is_command
     def help(self, arguments=None):
         help_msg = b'echo:\t\tprompt to echo back typing\r\n' \
                    b'help:\t\tdetailed description of options\r\n' \
@@ -118,8 +137,20 @@ class TelnetPlugin(BasePlugin):
                    b'quit:\t\tclose telnet connection to server\r\n'
         self._skt.send(help_msg)
 
+    @is_command
     def echo(self, arguments=None):
-        if len(arguments) > 0:
+        self.input_type = 'echo'
+        if arguments:
+            self.user_input = arguments
+            print(arguments)
+        else:
+            self._skt.send(b'Text? ')
+            self.user_input = self.get_input()
+        self._skt.send(self.user_input.encode())
+        self.do_save()
+        self._skt.send(b'\r\n')
+
+        '''if len(arguments) > 0:
             for i in arguments:
                 self._skt.send(i.encode())
         else:
@@ -128,8 +159,9 @@ class TelnetPlugin(BasePlugin):
             self.user_input = self.get_input()
             self._skt.send(self.user_input.encode())
             self.do_save()
-        self._skt.send(b'\r\n')
+        self._skt.send(b'\r\n')'''
 
+    @is_command
     def quit(self, arguments=None):
         self._skt.send(b'\nGoodbye\n')
         self.kill_plugin = True
