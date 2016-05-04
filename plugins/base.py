@@ -36,11 +36,10 @@ class BasePlugin(Thread):
         try:
             self._localAddress = self._skt.getsockname()[0]
             self._peerAddress = self._skt.getpeername()[0]
+        #TODO write something to database for potential scans
         except ConnectionResetError:
-            print("Scanned")
             self.kill_plugin = True
         except OSError:
-            print("Scanned")
             self.kill_plugin = True
 
     def run(self):

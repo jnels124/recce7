@@ -92,20 +92,21 @@ class TelnetPlugin(BasePlugin):
         self.io.write(b'. ')
 
         self.user_input = self.get_input()
-        arguments = self.user_input.split(' ', 1)
-
-        if len(arguments) == 0:
+        if len(self.user_input) == 0:
             return
 
+        arguments = self.user_input.split(' ', 1)
+        if len(arguments) == 0:
+            return
         self.user_input = arguments.pop(0)
         self.do_save()
 
         if hasattr(self, self.user_input):
-            if hasattr(getattr(self,self.user_input),'is_command'):
+            if hasattr(getattr(self, self.user_input), 'is_command'):
                 if len(arguments) == 0:
-                    getattr(self,self.user_input)()
+                    getattr(self, self.user_input)()
                 else:
-                    getattr(self,self.user_input)(arguments.pop(0))
+                    getattr(self, self.user_input)(arguments.pop(0))
             else:
                 self.do_save()
                 self.io.write(b'%unrecognized command - type options for a list\r\n')
