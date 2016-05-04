@@ -1,16 +1,40 @@
-from reportserver.manager.IpsManager import IpsManager
-from reportserver.manager import utilities
-from common.logger import Logger
-from common.globalconfig import GlobalConfig
-from reportserver.manager import dateTimeUtility
-from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import numpy as np
-
+import os.path
+import pickle
 import sqlite3
+
+from common.globalconfig import GlobalConfig
+from common.logger import Logger
+from mpl_toolkits.basemap import Basemap
+from reportserver.manager.IpsManager import IpsManager
+from reportserver.manager import dateTimeUtility
+from reportserver.manager import utilities
+
 
 badIpAddress = {
     'error': 'invalid ipaddress given'}
+
+
+pickle_file = 'ip_map.pickle'
+pickle_bytes = None
+
+
+def preload_map():
+    if not os.path.isfile(pickle_file):
+        ip_map = Basemap(projection='robin', lon_0=0, resolution='c')
+        ip_map.drawlsmask(ocean_color="#99ccff", land_color="#009900")
+        ip_map.drawcountries(linewidth=0.25, color='#ffff00')
+        ip_map.drawcoastlines(linewidth=0.25)
+        pickle.dump(ip_map, open(pickle_file, 'wb'), -1)
+    else:
+        ip_map = pickle.load(open(pickle_file, 'rb'))
+
+    global pickle_bytes
+    pickle_bytes = pickle.dumps(ip_map, -1)
+
+preload_map()
+
 
 class WorldmapServiceHandler():
     def __init__(self):
@@ -41,24 +65,19 @@ class WorldmapServiceHandler():
             self.construct_worldmap(rqst, uom, units)
 
     def construct_worldmap(self, rqst, uom, units):
-
         #call to construct port list
         #find unique ips by port
         #merge the results togoether
         #build the map
         #probably want to look at the PortsServiceHandler.py or IpsServiceHandler.py to follow those patterns.
 
-        pts = self.get_point_list(uom, units)
-        ip_map = Basemap(projection='robin', lon_0=0, resolution='c')
+        ip_map = pickle.loads(pickle_bytes)
 
+        pts = self.get_point_list(uom, units)
         for pt in pts:
             srclat, srclong = pt
             x, y = ip_map(srclong, srclat)
-            plt.plot(x, y, 'o', color='#ff0000', ms=2.7, markeredgewidth=0.5)
-
-#        ip_map.fillcontinents(color='#cccccc', lake_color='#99ccff')
-        ip_map.drawlsmask(ocean_color="#99ccff", land_color="#009900")
-        ip_map.drawcountries(color='#ffff00')
+            plt.plot(x, y, 'o', color='#ff0000', ms=2.7, markeredgewidth=1.0)
 
         plt.savefig('reportserver/worldmap.png', dpi=600)
         rqst.sendPngResponse("reportserver/worldmap.png", 200)
