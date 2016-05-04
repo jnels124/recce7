@@ -14,7 +14,7 @@ __author__ = 'Jesse Nelson <jnels1242012@gmail.com>, ' \
 
 
 class Framework:
-    __instance = None
+    _instance = None
 
     class _Framework:
         def __init__(self, plugin_cfg_path, global_cfg_path):
@@ -171,17 +171,17 @@ class Framework:
     # Singleton overhead
     #
 
-    def __new__(cls, plugin_cfg_path, default_cfg_path):
-        if not Framework.__instance:
-            Framework.__instance = Framework._Framework(
+    def __new__(cls, plugin_cfg_path=None, default_cfg_path=None):
+        if not Framework._instance:
+            Framework._instance = Framework._Framework(
                 plugin_cfg_path, default_cfg_path)
-        return Framework.__instance
+        return Framework._instance
 
     def __getattr__(self, name):
-        return getattr(Framework.__instance, name)
+        return getattr(Framework._instance, name)
 
     def __setattr__(self, name, value):
-        return setattr(Framework.__instance, name, value)
+        return setattr(Framework._instance, name, value)
 
 #
 # Program entry

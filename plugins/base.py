@@ -8,6 +8,8 @@ Contents
 import platform
 import socket
 import datetime
+
+from recon.p0fagent import P0fAgent
 from threading import Thread
 from uuid import uuid4
 
@@ -48,7 +50,27 @@ class BasePlugin(Thread):
         if not self.kill_plugin:
             self.do_track()
 
+        self.get_p0f_info()
+
+        #
+        # NOTE: Do NOT call self.shutdown() here! To shutdown this
+        # thread, just return from this run() method.
+        #
+        # self.shutdown() allows the framework to force this
+        # thread to shutdown; you never need to call it.
+        #
+        # Calling self.shutdown() from here will cause this thread
+        # to join itself - this will block forever. This in turn
+        # will exceed the open file limit and cause the framework
+        # to die.
+        #
+        # So don't call that method here! Just return from this.
+        #
         self._framework.plugin_stopped(self)
+
+    def get_p0f_info(self):
+        agent = P0fAgent(self._peerAddress, self._framework, self._session)
+        agent.start()
 
     def get_entry(self):
         entry = {self.get_table_name(): {}}

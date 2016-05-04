@@ -156,7 +156,7 @@ class HTTPPlugin(BasePlugin, BaseHTTPRequestHandler):
     def do_POST(self):
         self.get_body()
         if self.path in GOOD_PATHS:
-            self.go_GET()
+            self.do_GET()
         elif self.path == '/login':
             self.send_error(403)
         else:

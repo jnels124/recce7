@@ -23,6 +23,7 @@ class GlobalConfig:
             #TODO: Don't use eval!
             config_object['port'] = int(config_object['port'])
             config_object['tableColumns'] = eval(config_object['tableColumns'])
+            config_object['instanceName'] = plugin
             return config_object
 
         def read_plugin_config(self):

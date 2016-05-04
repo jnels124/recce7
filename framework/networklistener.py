@@ -2,6 +2,7 @@ import platform
 import socket
 
 from common.logger import Logger
+from recon.ipinfoagent import IPInfoAgent
 from threading import Thread, Lock
 
 __author__ = 'Jesse Nelson <jnels1242012@gmail.com>, ' \
@@ -37,15 +38,22 @@ class NetworkListener(Thread):
         self._logger.info('%s plugin listener started on port %d'
                           % (self._config['moduleClass'], self._port))
         while self._running:
-            self._session_socket = socket.socket(
-                socket.AF_INET, socket.SOCK_STREAM)
-            self._session_socket.setsockopt(
-                socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self._session_socket.bind((self._listening_address, self._port))
-            self._session_socket.listen(1)
-            self.start_listening(self._session_socket)
-            self._session_socket.close()
-            self.connection_count += 1
+            try:
+                self._session_socket = socket.socket(
+                    socket.AF_INET, socket.SOCK_STREAM)
+                self._session_socket.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self._session_socket.bind((self._listening_address, self._port))
+                self._session_socket.listen(1)
+                self.start_listening(self._session_socket)
+                self._session_socket.close()
+                self.connection_count += 1
+            except OSError as e:
+                if e.errno == 24:
+                    self._logger(self._config['instanceName'] + ': Too many open files.')
+                    self._running = False
+            except Exception as e:
+                self._logger.warn(str(e))
         self._logger.info('%s plugin listener on port %d shutting down'
                           % (self._config['moduleClass'], self._port))
         self._session_socket = None
@@ -57,12 +65,20 @@ class NetworkListener(Thread):
                 self._logger.info('New connection from %s on port %d'
                                   % (addr, self._port))
                 self._framework.spawn(new_socket, self._config)
+
+                ipinfo_agent = IPInfoAgent(addr[0], self._framework,
+                                           self._config['instanceName'])
+                ipinfo_agent.start()
         except ConnectionAbortedError as e:
             if not self._running:
                 return
             raise e
         except OSError as e:
             if e.errno == 22 and not self._running:
+                return
+            if e.errno == 24:
+                self._logger(self._config['instanceName'] + ': Too many open files.')
+                self._running = False
                 return
             raise e
         except Exception as e:
@@ -71,9 +87,12 @@ class NetworkListener(Thread):
 
     def shutdown(self):
         self._running = False
-        if self._session_socket:
-            if platform.system() == 'Linux':
-                self._session_socket.shutdown(socket.SHUT_RDWR)
-            else:
-                self._session_socket.close()
+        try:
+            if self._session_socket:
+                if platform.system() == 'Linux':
+                    self._session_socket.shutdown(socket.SHUT_RDWR)
+                else:
+                    self._session_socket.close()
+        except Exception as e:
+            self._logger.warn('while closing socket: ' + str(e))
         self.join()

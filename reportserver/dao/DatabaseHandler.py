@@ -34,8 +34,9 @@ class DatabaseHandler:
             return None
         try:
             conn = sqlite3.connect(database_name)
-        except sqlite3.OperationalError:
-            self.log.error("Problem connecting to database at: " + database_name)
+        except sqlite3.OperationalError as oe:
+            self.log.error("****Problem connecting to database*** at: " + database_name)
+            self.log.error(oe)
         else:
             return conn
 
