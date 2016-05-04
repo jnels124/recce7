@@ -28,6 +28,7 @@
 from plugins.base import BasePlugin
 from socket import SocketIO
 
+
 class TelnetPlugin(BasePlugin):
     def __init__(self, socket, config, framework):
         BasePlugin.__init__(self, socket, config, framework)
@@ -47,12 +48,15 @@ class TelnetPlugin(BasePlugin):
                 self.command()
         except OSError:
             self.kill_plugin = True
+            self.io.close()
             return
         except AttributeError:
             self.kill_plugin = True
+            self.io.close()
             return
         except UnicodeDecodeError:
             self.kill_plugin = True
+            self.io.close()
             return
 
     def get_session(self):
@@ -96,8 +100,8 @@ class TelnetPlugin(BasePlugin):
         self.user_input = arguments.pop(0)
         self.do_save()
 
-        if (hasattr(self, self.user_input)):
-            if (hasattr(getattr(self,self.user_input),'is_command')):
+        if hasattr(self, self.user_input):
+            if hasattr(getattr(self,self.user_input),'is_command'):
                 if len(arguments) == 0:
                     getattr(self,self.user_input)()
                 else:
@@ -116,7 +120,7 @@ class TelnetPlugin(BasePlugin):
     OPTIONS = ['options',
                'help',
                'echo',
-               'quit',]
+               'quit']
 
     @set_command
     def options(self, arguments=None):

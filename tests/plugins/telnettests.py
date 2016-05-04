@@ -178,9 +178,9 @@ class TelnetPluginTest(unittest.TestCase):
         plugin_test = TelnetPlugin(test_server, setup_test_config(8023, 'telnet', 'TelnetPlugin'), None)
         plugin_test.start()
 
-        test_client.send(b'test_username')
-        test_client.send(b'test_password')
-        test_client.send(b'quit')
+        test_client.send(b'test_username\r\n')
+        test_client.send(b'test_password\r\n')
+        test_client.send(b'quit\r\n')
 
         test_client.close()
 
