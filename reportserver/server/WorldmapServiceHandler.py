@@ -7,6 +7,9 @@ import sqlite3
 from common.globalconfig import GlobalConfig
 from common.logger import Logger
 from mpl_toolkits.basemap import Basemap
+from PIL import ImageFont
+from PIL import Image
+from PIL import ImageDraw
 from reportserver.manager.IpsManager import IpsManager
 from reportserver.manager import dateTimeUtility
 from reportserver.manager import utilities
@@ -80,6 +83,24 @@ class WorldmapServiceHandler():
             plt.plot(x, y, 'o', color='#ff0000', ms=2.7, markeredgewidth=1.0)
 
         plt.savefig('reportserver/worldmap.png', dpi=600)
+
+        img = Image.open('reportserver/worldmap.png')
+        draw = ImageDraw.Draw(img)
+
+        font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 175)
+        draw.text((50, 50), "Attacks within the last %s %s" % (units, uom),
+                  (0, 0, 0), font=font)
+
+        font = ImageFont.truetype(
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 125)
+        draw.text((50, 325), "Total: %s" % (len(pts)),
+                  (0, 0, 0), font=font)
+
+        # draw = ImageDraw.Draw(img)
+        # draw = ImageDraw.Draw(img)
+        img.save("reportserver/worldmap.png")
+
         rqst.sendPngResponse("reportserver/worldmap.png", 200)
 
     def get_point_list(self, uom, units):
