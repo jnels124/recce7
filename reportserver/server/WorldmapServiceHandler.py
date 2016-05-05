@@ -89,7 +89,7 @@ class WorldmapServiceHandler():
 
         font = ImageFont.truetype(
             "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 175)
-        draw.text((50, 50), "Attacks within the last %s %s" % (units, uom),
+        draw.text((50, 50), "Unique IP addresses: last %s %s" % (units, uom),
                   (0, 0, 0), font=font)
 
         font = ImageFont.truetype(
