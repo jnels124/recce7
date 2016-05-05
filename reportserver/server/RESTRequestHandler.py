@@ -1,6 +1,7 @@
 import json
 from reportserver.manager import utilities
 from http.server import BaseHTTPRequestHandler
+from common.globalconfig import GlobalConfig
 
 
 from reportserver.server.PortsServiceHandler import PortsServiceHandler
@@ -46,9 +47,10 @@ class RestRequestHandler (BaseHTTPRequestHandler):
 
 
     def get_full_url_path(self):
-        # TODO:  how to get full path here??
-        #print("address : " + str(self.client_address))
-        full_path = 'http://%s:%s/v1/analytics' % (str(self.client_address[0]), str(8080))
+        self.g_config = GlobalConfig()
+        self.host = self.g_config.get_report_server_host()
+        self.port = self.g_config.get_report_server_port()
+        full_path = 'http://%s:%s/v1/analytics' % (str(self.host), str(self.port))
         return full_path
 
     def getIndexPayload(self):
