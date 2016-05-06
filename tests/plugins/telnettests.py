@@ -66,10 +66,18 @@ class TelnetPluginTest(unittest.TestCase):
         plugin_test.command()
 
         self.assertEqual(test_client.recv(2), b'. ')
-        self.assertEqual(test_client.recv(1024), b'echo:\t\tprompt to echo back typing\r\n'
-                                                 b'help:\t\tdetailed description of options\r\n'
-                                                 b'options:\tbasic list of options available to user\r\n'
-                                                 b'quit:\t\tclose telnet connection to server\r\n')
+        help = test_client.recv(1024).decode()
+        self.assertEquals("options:\t" in help, True)
+        self.assertEquals("options:\t\t" in help, False)
+        self.assertEquals("help:" in help, True)
+        self.assertEquals("echo:" in help, True)
+        self.assertEquals("quit:" in help, True)
+        self.assertEquals("__init__:" in help, False)
+
+        self.assertEquals("basic list of options available to user" in help, True)
+        self.assertEquals("detailed description of options" in help, True)
+        self.assertEquals("prompt to echo back typing" in help, True)
+        self.assertEquals("close telnet connection to server" in help, True)
 
         self.assertEqual(plugin_test.get_entry(), {'test': {'input_type': 'command', 'user_input': 'help'}})
 
@@ -84,8 +92,12 @@ class TelnetPluginTest(unittest.TestCase):
         plugin_test.command()
 
         self.assertEqual(test_client.recv(2), b'. ')
-        self.assertEqual(test_client.recv(1024), b'\r\nWelcome, Please choose from the following options'
-                                                 b'\r\noptions\thelp\techo\tquit\t\r\n')
+        options = test_client.recv(1024).decode()
+        self.assertEquals("options\t\t" in options, True)
+        self.assertEquals("help\t\t" in options, True)
+        self.assertEquals("echo\t\t" in options, True)
+        self.assertEquals("quit\t\t" in options, True)
+        self.assertEquals("__init__\t\t" in options, False)
         self.assertEqual(plugin_test.get_entry(), {'test': {'input_type': 'command', 'user_input': 'options'}})
 
         test_server.close()
@@ -181,6 +193,17 @@ class TelnetPluginTest(unittest.TestCase):
         test_client.send(b'test_username\r\n')
         test_client.send(b'test_password\r\n')
         test_client.send(b'quit\r\n')
+
+        test_client.close()
+
+    def test_multiple_quit(self):
+        test_client, test_server = setup_test_sockets(8023)
+        plugin_test = TelnetPlugin(test_server, setup_test_config(8023, 'telnet', 'TelnetPlugin'), None)
+        plugin_test.start()
+
+        test_client.send(b'test_username\r\n')
+        test_client.send(b'test_password\r\n')
+        test_client.send(b'quit;quit;quit\r\n')
 
         test_client.close()
 

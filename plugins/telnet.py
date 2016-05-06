@@ -25,8 +25,18 @@
 """
 """
 
+from math import ceil
 from plugins.base import BasePlugin
 from socket import SocketIO
+
+
+def set_command(help_description):
+    def func_decorator(function):
+        function.get_command = True
+        function.get_description = help_description
+        return function
+
+    return func_decorator
 
 
 class TelnetPlugin(BasePlugin):
@@ -40,27 +50,17 @@ class TelnetPlugin(BasePlugin):
     def do_track(self):
         self.get_session()
 
-        try:
-            self.username()
-            self.password()
-            self.options()
-            while self._skt and not self.kill_plugin:
-                self.command()
-        except OSError:
-            self.kill_plugin = True
-            self.io.close()
-            return
-        except AttributeError:
-            self.kill_plugin = True
-            self.io.close()
-            return
-        except UnicodeDecodeError:
-            self.kill_plugin = True
-            self.io.close()
-            return
+        self.username()
+        self.password()
+        self.options()
+        while self._skt and not self.kill_plugin:
+            self.command()
 
     def get_session(self):
         self._session = str(self.get_uuid4())
+
+    def close_descriptors(self):
+        self.io.close()
 
     def get_input(self):
         try:
@@ -91,55 +91,77 @@ class TelnetPlugin(BasePlugin):
         self.input_type = 'command'
         self.io.write(b'. ')
 
-        self.user_input = self.get_input()
-        if len(self.user_input) == 0:
+        line = self.get_input()
+        commands = line.split(';')
+
+        for i in commands:
+            if self.kill_plugin:
+                break
+            self.handle(i)
+
+    def handle(self, command):
+        if len(command) == 0:
             return
 
-        arguments = self.user_input.split(' ', 1)
-        if len(arguments) == 0:
-            return
-        self.user_input = arguments.pop(0)
+        self.input_type = 'command'
+        self.user_input = command
         self.do_save()
 
-        if hasattr(self, self.user_input):
-            if hasattr(getattr(self, self.user_input), 'is_command'):
-                if len(arguments) == 0:
-                    getattr(self, self.user_input)()
-                else:
-                    getattr(self, self.user_input)(arguments.pop(0))
+        arguments = command.split(' ', 1)
+        command = arguments.pop(0)
+
+        if self.is_command(command):
+            if len(arguments) == 0:
+                getattr(self, command)()
             else:
-                self.do_save()
-                self.io.write(b'%unrecognized command - type options for a list\r\n')
+                getattr(self, command)(arguments.pop(0))
         else:
-            self.do_save()
             self.io.write(b'%unrecognized command - type options for a list\r\n')
 
-    def set_command(function):
-        function.is_command = True
-        return function
+    def is_command(self, command):
+        if hasattr(self, command):
+            if hasattr(getattr(self, command), 'get_command'):
+                return True
+            else:
+                return False
+        else:
+            return False
 
-    OPTIONS = ['options',
-               'help',
-               'echo',
-               'quit']
-
-    @set_command
+    @set_command('basic list of options available to user')
     def options(self, arguments=None):
         self.io.write(b'\r\nWelcome, Please choose from the following options\r\n')
-        for option in self.OPTIONS:
-            option += '\t'
-            self.io.write(option.encode())
+        line_count = 0
+        for option in dir(self):
+            if self.is_command(option):
+                if line_count == 5:
+                    self.io.write(b'\r\n')
+                    line_count = 0
+
+                tabs = b''
+                i = 0
+                try:
+                    for i in range(0, ceil((16 - len(option)) / 8)):
+                        tabs += b'\t'
+                except ZeroDivisionError:
+                    tabs = ':'
+                self.io.write(option.encode() + tabs)
+                line_count += 1
         self.io.write(b'\r\n')
 
-    @set_command
+    @set_command('detailed description of options')
     def help(self, arguments=None):
-        help_msg = b'echo:\t\tprompt to echo back typing\r\n' \
-                   b'help:\t\tdetailed description of options\r\n' \
-                   b'options:\tbasic list of options available to user\r\n' \
-                   b'quit:\t\tclose telnet connection to server\r\n'
-        self.io.write(help_msg)
+        for help in dir(self):
+            if self.is_command(help):
+                tabs = b':'
+                i = 0
+                try:
+                    for i in range(0, ceil((16 - len(help) - 1) / 8)):
+                        tabs += b'\t'
+                except ZeroDivisionError:
+                    tabs = ':'
+                self.io.write(help.encode() + tabs + getattr(getattr(self, help), 'get_description').encode() + b'\r\n')
 
-    @set_command
+    @set_command('prompt to echo back typing')
     def echo(self, arguments=None):
         self.input_type = 'echo'
         if arguments:
@@ -147,10 +169,10 @@ class TelnetPlugin(BasePlugin):
         else:
             self.io.write(b'Text? ')
             self.user_input = self.get_input()
+            self.do_save()
         self.io.write(self.user_input.encode() + b'\r\n')
-        self.do_save()
 
-    @set_command
+    @set_command('close telnet connection to server')
     def quit(self, arguments=None):
         self.io.write(b'\nGoodbye\n')
         self.io.close()
