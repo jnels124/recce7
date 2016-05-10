@@ -1,11 +1,22 @@
 from distutils.core import setup
-import platform
+# from setuptools.command.install import install
+# import os
+#
+# class Recce7Install(install):
+#     """ Post install scripts to install authbind """
+#     def run (self):
+#         os.system('sudo apt-get install -y authbind')
+#         install.run(self)
+# # cmdclass={'install': Recce7Install},
 
 setup(name='recce7',
       version='1.0',
-      description='Honeypot',
+      description='Report Server',
       author='Jesse Nelson',
       author_email='jnels124@msudenver.edu',
-      data_files=[('/etc/recce7/configs/', ['config/plugins.cfg'])],
-      scripts=['startHoneyPot.sh'],
-      packages=['framework', 'plugins', 'database', 'common'])
+      install_requires=['python-dateutil', 'p0f', 'requests'],
+      data_files=[('/etc/recce7/configs/', ['config/plugins.cfg', 'config/global.cfg']),
+                  ('/usr/sbin/recce7/database/sql_scripts', ['database/sql_scripts/sessions.sql'])],
+      scripts=['startReportServer.sh',  'recce7.sh', 'auth'],
+      packages=['framework', 'plugins', 'database', 'common', 'recon', 'reportserver',
+                'reportserver.dao', 'reportserver.manager', 'reportserver.server'])
