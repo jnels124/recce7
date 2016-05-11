@@ -1,0 +1,17 @@
+Source: recce7
+Maintainer: Jesse Nelson <jnels124@msudenver.edu>
+Section: python
+Priority: optional
+Build-Depends: python3-all, debhelper (>= 7.4.3)
+Standards-Version: 3.9.1
+
+
+
+
+
+Package: python3-recce7
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: Report Server
+
+

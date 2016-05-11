@@ -1,0 +1,17 @@
+.DS_Store
+.settings
+.project
+*.pyc
+.idea
+out
+<<<<<<< HEAD
+honeypot/src/dist
+honeypot/src/build
+honeypot/src/MANIFEST
+=======
+htmlcov*
+TestDB.db
+.coverage
+*.log
+honeyDB*
+>>>>>>> c0a18368ecadc1a75c5bdbdb50cf923fd8ac99ca

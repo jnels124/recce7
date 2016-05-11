@@ -1,0 +1,9 @@
+Package: python3-recce7
+Source: recce7
+Version: 1.0-1
+Architecture: all
+Maintainer: Jesse Nelson <jnels124@msudenver.edu>
+Installed-Size: 172
+Section: python
+Priority: optional
+Description: Report Server

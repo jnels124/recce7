@@ -1,0 +1,22 @@
+Format: 1.8
+Date: Wed, 11 May 2016 03:17:36 +0000
+Source: recce7
+Binary: python3-recce7
+Architecture: all
+Version: 1.0-1
+Distribution: unstable
+Urgency: low
+Maintainer: Jesse Nelson <jnels124@msudenver.edu>
+Changed-By: Jesse Nelson <jnels124@msudenver.edu>
+Description:
+ python3-recce7 - Report Server
+Changes:
+ recce7 (1.0-1) unstable; urgency=low
+ .
+   * source package automatically created by stdeb 0.8.5
+Checksums-Sha1:
+ 0f9ed6828b55c0752c850be2e4d01b6af38de5aa 21500 python3-recce7_1.0-1_all.deb
+Checksums-Sha256:
+ d3e3a3524d38288e7d9cdd6641d4c486242df2dd36f97caf59c906c84a560210 21500 python3-recce7_1.0-1_all.deb
+Files:
+ 29d1bc446523340b2552c257018e21d6 21500 python optional python3-recce7_1.0-1_all.deb
